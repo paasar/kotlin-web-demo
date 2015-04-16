@@ -21,17 +21,24 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.j2k.JavaToKotlinConverterForWebDemo;
 import org.jetbrains.webdemo.*;
 import org.jetbrains.webdemo.database.MySqlConnector;
 import org.jetbrains.webdemo.examplesLoader.ExamplesHolder;
 import org.jetbrains.webdemo.examplesLoader.ExamplesLoader;
 import org.jetbrains.webdemo.handlers.ServerResponseUtils;
-import org.jetbrains.webdemo.responseHelpers.*;
+import org.jetbrains.webdemo.responseHelpers.CompileAndRunExecutor;
+import org.jetbrains.webdemo.responseHelpers.JsConverter;
+import org.jetbrains.webdemo.responseHelpers.JsonResponseForCompletion;
+import org.jetbrains.webdemo.responseHelpers.JsonResponseForHighlighting;
 import org.jetbrains.webdemo.session.SessionInfo;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 public class HttpSession {
@@ -102,7 +109,8 @@ public class HttpSession {
 
     private void sendConversationResult() {
         PostData data = getPostDataFromRequest();
-        writeResponse(new JavaToKotlinConverter(sessionInfo).getResult(data.text), HttpServletResponse.SC_OK);
+        setGlobalVariables(null);
+        writeResponse(new JavaToKotlinConverterForWebDemo(sessionInfo).getResult(data.text, currentProject), HttpServletResponse.SC_OK);
     }
 
     private void sendWriteLogResult() {

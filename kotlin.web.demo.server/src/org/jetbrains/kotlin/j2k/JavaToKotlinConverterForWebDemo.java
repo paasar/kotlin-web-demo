@@ -14,33 +14,46 @@
  * limitations under the License.
  */
 
-package org.jetbrains.webdemo.responseHelpers;
+package org.jetbrains.kotlin.j2k;
 
-import org.jetbrains.kotlin.j2k.J2kPackage;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import org.jetbrains.webdemo.ErrorWriter;
-import org.jetbrains.webdemo.Initializer;
 import org.jetbrains.webdemo.ResponseUtils;
-import org.jetbrains.webdemo.ServerInitializer;
 import org.jetbrains.webdemo.session.SessionInfo;
 import org.json.JSONArray;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class JavaToKotlinConverter {
+public class JavaToKotlinConverterForWebDemo {
     private final SessionInfo info;
 
-    public JavaToKotlinConverter(SessionInfo info) {
+    public JavaToKotlinConverterForWebDemo(SessionInfo info) {
         this.info = info;
     }
 
-    public String getResult(String code) {
+    public String getResult(String code, Project project) {
         JSONArray result = new JSONArray();
         Map<String, String> map = new HashMap<String, String>();
         try {
             String resultFormConverter;
             try {
-                  resultFormConverter = J2kPackage.translateToKotlin(code);
+                JavaToKotlinConverter converter = new JavaToKotlinConverter(
+                        project,
+                        ConverterSettings.defaultSettings,
+                        EmptyReferenceSearcher.INSTANCE$,
+                        EmptyResolverForConverter.INSTANCE$,
+                        null);
+                PsiFile javaFile = PsiFileFactory.getInstance(project).createFileFromText("test.java", JavaLanguage.INSTANCE, code);
+                JavaToKotlinConverter.InputElement inputElement = new JavaToKotlinConverter.InputElement(javaFile, null);
+                resultFormConverter = new JavaToKotlinTranslator().prettify(
+                        converter.elementsToKotlin(Collections.singletonList(inputElement), new EmptyProgressIndicator())
+                                .getResults().iterator().next().getText());
             } catch (Exception e) {
                 return ResponseUtils.getErrorInJson("EXCEPTION: " + e.getMessage());
             }
@@ -54,7 +67,7 @@ public class JavaToKotlinConverter {
             return ResponseUtils.getErrorInJson(e.getMessage());
         }
         finally {
-            Initializer.reinitializeJavaEnvironment();
+//            Initializer.reinitializeJavaEnvironment();
         }
 
         result.put(map);

@@ -16,7 +16,10 @@
 
 package org.jetbrains.webdemo.test.j2kconverter;
 
-import org.jetbrains.webdemo.responseHelpers.JavaToKotlinConverter;
+import org.jetbrains.kotlin.j2k.JavaToKotlinConverterForWebDemo;
+import org.jetbrains.kotlin.psi.JetFile;
+import org.jetbrains.webdemo.JetPsiFactoryUtil;
+import org.jetbrains.webdemo.errorsDescriptors.ErrorAnalyzer;
 import org.jetbrains.webdemo.session.SessionInfo;
 import org.jetbrains.webdemo.test.BaseTest;
 import org.jetbrains.webdemo.test.TestUtils;
@@ -51,8 +54,9 @@ public class J2KConverterTest extends BaseTest {
 
     private void compareResult(String fileName, String expectedResult) throws IOException {
         sessionInfo.setType(SessionInfo.TypeOfRequest.CONVERT_TO_KOTLIN);
-
-        String actualResult = new JavaToKotlinConverter(sessionInfo).getResult(TestUtils.getDataFromFile(TestUtils.TEST_SRC, fileName));
+        JetFile currentPsiFile = JetPsiFactoryUtil.createFile(getProject(), "class A");
+        new ErrorAnalyzer(currentPsiFile, sessionInfo).getAllErrors();
+        String actualResult = new JavaToKotlinConverterForWebDemo(sessionInfo).getResult(TestUtils.getDataFromFile(TestUtils.TEST_SRC, fileName), currentPsiFile.getProject());
         assertEquals("wrong result in " + fileName, expectedResult, actualResult);
     }
 }
